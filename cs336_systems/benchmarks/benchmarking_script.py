@@ -82,7 +82,7 @@ def run_step(
         return
     
     logits = model(x)
-    loss = einsum.einsum(logits, y, "b t v, b t -> ()") / (x.shape[0] * x.shape[1])
+    loss = F.cross_entropy(logits.reshape(-1, logits.size(-1)), y.reshape(-1))
     loss.backward()
 
     if mode == "train_step":
@@ -109,6 +109,8 @@ def benchmark(args: argparse.Namespace) -> BenchmarkResult:
         model.eval()
     else:
         model.train()
+
+    synchronize_if_cuda(device)
     
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4) if args.mode == "train_step" else None
 
